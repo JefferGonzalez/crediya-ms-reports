@@ -1,7 +1,23 @@
-FROM eclipse-temurin:21-jdk-alpine
-VOLUME /tmp
-COPY *.jar crediya-ms-reports.jar
-ENV JAVA_OPTS=" -Xshareclasses:name=cacheapp,cacheDir=/cache,nonfatal -XX:+UseContainerSupport -XX:MaxRAMPercentage=70 -Djava.security.egd=file:/dev/./urandom"
-# Replace with a non-root user to avoid running the container with excessive privileges
-USER appuser
-ENTRYPOINT [ "sh", "-c", "java $JAVA_OPTS  -jar crediya-ms-reports.jar" ]
+FROM eclipse-temurin:21-jdk-alpine AS builder
+WORKDIR /workspace/app
+
+COPY build.gradle settings.gradle gradlew gradle.properties ./
+COPY gradle ./gradle
+COPY main.gradle .
+
+RUN chmod +x ./gradlew && ./gradlew dependencies --no-daemon
+
+COPY applications ./applications
+COPY domain ./domain
+COPY infrastructure ./infrastructure
+
+RUN ./gradlew build -x test --no-daemon
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+RUN apk add --no-cache curl
+
+COPY --from=builder /workspace/app/applications/app-service/build/libs/*.jar app.jar
+
+ENTRYPOINT ["java","-jar","/app/app.jar"]
