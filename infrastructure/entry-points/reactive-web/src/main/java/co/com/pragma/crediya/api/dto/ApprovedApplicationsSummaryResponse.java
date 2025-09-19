@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -16,6 +17,8 @@ import java.time.Instant;
 public class ApprovedApplicationsSummaryResponse {
 
     private long approvedApplicationsCount;
+
+    private BigDecimal approvedApplicationsAmount;
 
     private Instant lastUpdated;
 

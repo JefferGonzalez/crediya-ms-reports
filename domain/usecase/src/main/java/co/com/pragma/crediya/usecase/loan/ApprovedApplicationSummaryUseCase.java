@@ -11,17 +11,21 @@ public record ApprovedApplicationSummaryUseCase(ApprovedApplicationSummaryReposi
     public Mono<Void> recordApprovedApplication(ApprovedApplication application) {
         logger.info("Recording approved application ID {} at {}", application.id(), application.approvedAt());
 
-        return repository.incrementSummary(1L)
-                .doOnSuccess(summary -> logger.info("Updated summary: total approved count = {}", summary.approvedApplicationsCount()))
+        return repository.incrementSummary(1L, application.amount())
+                .doOnSuccess(summary ->
+                        logger.info("Updated summary: total approved count = {}, total approved amount = {}",
+                                summary.approvedApplicationsCount(), summary.approvedApplicationsAmount()))
                 .doOnError(e -> logger.error("Failed to update approved applications summary. Reason: {}", e.getMessage(), e))
                 .then();
     }
 
     public Mono<ApprovedApplicationSummary> getApprovedApplicationsSummary() {
-        logger.info("Retrieving  approved applications summary");
+        logger.info("Retrieving approved applications summary");
 
         return repository.getSummary()
-                .doOnSuccess(summary -> logger.info("Current summary: total approved count = {}", summary.approvedApplicationsCount()))
+                .doOnSuccess(summary ->
+                        logger.info("Current summary: total approved count = {}, total approved amount = {}",
+                                summary.approvedApplicationsCount(), summary.approvedApplicationsAmount()))
                 .doOnError(e -> logger.error("Failed to retrieve approved applications summary. Reason: {}", e.getMessage(), e));
     }
 

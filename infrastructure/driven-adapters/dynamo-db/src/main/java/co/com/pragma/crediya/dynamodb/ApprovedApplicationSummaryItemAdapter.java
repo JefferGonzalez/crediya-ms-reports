@@ -10,6 +10,7 @@ import reactor.core.publisher.Mono;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,15 +24,15 @@ public class ApprovedApplicationSummaryItemAdapter implements ApprovedApplicatio
     private final ApprovedApplicationSummaryConverter converter;
 
     @Override
-    public Mono<ApprovedApplicationSummary> incrementSummary(long countToAdd) {
+    public Mono<ApprovedApplicationSummary> incrementSummary(long countToAdd, BigDecimal amountToAdd) {
         Map<String, AttributeValue> key = buildKey();
 
         UpdateItemRequest request = UpdateItemRequest.builder()
                 .tableName(ApprovedApplicationSummaryFieldNames.TABLE_NAME)
                 .key(key)
-                .updateExpression("ADD #count :countInc SET #lastUpdated = :now")
+                .updateExpression("ADD #count :countInc SET #amount = if_not_exists(#amount, :zero) + :amountInc, #lastUpdated = :now")
                 .expressionAttributeNames(buildExpressionAttributeNames())
-                .expressionAttributeValues(buildIncrementExpressionValues(countToAdd))
+                .expressionAttributeValues(buildIncrementExpressionValues(countToAdd, amountToAdd))
                 .returnValues(ReturnValue.ALL_NEW)
                 .build();
 
@@ -65,14 +66,19 @@ public class ApprovedApplicationSummaryItemAdapter implements ApprovedApplicatio
     private Map<String, String> buildExpressionAttributeNames() {
         Map<String, String> names = new HashMap<>();
         names.put("#count", ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_COUNT);
+        names.put("#amount", ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_AMOUNT);
         names.put("#lastUpdated", ApprovedApplicationSummaryFieldNames.LAST_UPDATED);
+
         return names;
     }
 
-    private Map<String, AttributeValue> buildIncrementExpressionValues(long countToAdd) {
+    private Map<String, AttributeValue> buildIncrementExpressionValues(long countToAdd, BigDecimal amountToAdd) {
         Map<String, AttributeValue> values = new HashMap<>();
         values.put(":countInc", AttributeValue.builder().n(Long.toString(countToAdd)).build());
+        values.put(":amountInc", AttributeValue.builder().n(amountToAdd.toPlainString()).build());
         values.put(":now", AttributeValue.builder().s(Instant.now().toString()).build());
+        values.put(":zero", AttributeValue.builder().n("0").build());
+
         return values;
     }
 
