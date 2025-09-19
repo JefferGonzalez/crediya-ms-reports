@@ -1,0 +1,22 @@
+aws:
+  region: "${AWS_SQS_REGION}"
+
+entrypoint:
+  sqs:
+    region: "${AWS_SQS_REGION}"
+    queueUrl: "${AWS_SQS_QUEUE_URL}"
+    loanApprovedEventsQueueQueueName: "${AWS_SQS_LOAN_APPROVED_EVENTS_QUEUE_NAME}"
+    waitTimeSeconds: 20
+    maxNumberOfMessages: 10
+    visibilityTimeoutSeconds: 10
+    numberOfThreads: 1
+
+application:
+  security:
+    jwt:
+      expiration: 3600000
+      secret-key: "${JWT_SECRET_KEY}"
+
+logging:
+  level:
+    root: INFO

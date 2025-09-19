@@ -1,6 +1,9 @@
 package co.com.pragma.crediya.config;
 
+import co.com.pragma.crediya.model.loan.gateways.ApprovedApplicationSummaryRepository;
+import co.com.pragma.crediya.model.logs.gateways.LoggerPort;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,14 +35,15 @@ class UseCasesConfigTest {
     static class TestConfig {
 
         @Bean
-        public MyUseCase myUseCase() {
-            return new MyUseCase();
+        public ApprovedApplicationSummaryRepository repository() {
+            return Mockito.mock(ApprovedApplicationSummaryRepository.class);
         }
+
+        @Bean
+        public LoggerPort loggerPort() {
+            return Mockito.mock(LoggerPort.class);
+        }
+
     }
 
-    static class MyUseCase {
-        public String execute() {
-            return "MyUseCase Test";
-        }
-    }
 }
