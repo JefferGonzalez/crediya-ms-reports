@@ -13,6 +13,7 @@ import reactor.test.StepVerifier;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 import software.amazon.awssdk.services.dynamodb.model.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,10 @@ class ApprovedApplicationSummaryItemAdapterTest {
 
     private ApprovedApplicationSummaryItemAdapter adapter;
 
+    private final long countToAdd = 1;
+
+    private final BigDecimal amountToAdd = BigDecimal.valueOf(1500000);
+
     @BeforeEach
     void setUp() {
         adapter = new ApprovedApplicationSummaryItemAdapter(lowLevelClient, converter);
@@ -40,11 +45,11 @@ class ApprovedApplicationSummaryItemAdapterTest {
 
     @Test
     void incrementSummaryWhenSuccessfulShouldReturnUpdatedSummary() {
-        long countToAdd = 5L;
-        Map<String, AttributeValue> responseAttributes = createMockAttributes(10L, "2024-01-15T10:30:00Z");
+        Map<String, AttributeValue> responseAttributes = createMockAttributes(10L, BigDecimal.valueOf(85000000), "2024-01-15T10:30:00Z");
         ApprovedApplicationSummary expectedSummary = new ApprovedApplicationSummary(
                 ApprovedApplicationSummaryFieldNames.SUMMARY,
                 10L,
+                BigDecimal.valueOf(85000000),
                 Instant.parse("2024-01-15T10:30:00Z")
         );
 
@@ -58,7 +63,7 @@ class ApprovedApplicationSummaryItemAdapterTest {
         when(converter.fromDynamoDbAttributes(responseAttributes))
                 .thenReturn(expectedSummary);
 
-        StepVerifier.create(adapter.incrementSummary(countToAdd))
+        StepVerifier.create(adapter.incrementSummary(countToAdd, amountToAdd))
                 .expectNext(expectedSummary)
                 .verifyComplete();
 
@@ -69,14 +74,18 @@ class ApprovedApplicationSummaryItemAdapterTest {
         assertThat(capturedRequest.tableName()).isEqualTo(ApprovedApplicationSummaryFieldNames.TABLE_NAME);
         assertThat(capturedRequest.returnValues()).isEqualTo(ReturnValue.ALL_NEW);
         assertThat(capturedRequest.updateExpression()).contains("ADD #count :countInc");
-        assertThat(capturedRequest.updateExpression()).contains("SET #lastUpdated = :now");
+        assertThat(capturedRequest.updateExpression()).contains("SET #amount = if_not_exists(#amount, :zero) + :amountInc");
+        assertThat(capturedRequest.updateExpression()).contains("#lastUpdated = :now");
 
         Map<String, AttributeValue> values = capturedRequest.expressionAttributeValues();
-        assertThat(values.get(":countInc").n()).isEqualTo("5");
+        assertThat(values.get(":countInc").n()).isEqualTo("1");
+        assertThat(values.get(":amountInc").n()).isEqualTo("1500000");
         assertThat(values.get(":now").s()).isNotNull();
+        assertThat(values.get(":zero").n()).isEqualTo("0");
 
         assertThat(capturedRequest.expressionAttributeNames())
                 .containsEntry("#count", ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_COUNT)
+                .containsEntry("#amount", ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_AMOUNT)
                 .containsEntry("#lastUpdated", ApprovedApplicationSummaryFieldNames.LAST_UPDATED);
 
         verify(converter).fromDynamoDbAttributes(responseAttributes);
@@ -84,13 +93,12 @@ class ApprovedApplicationSummaryItemAdapterTest {
 
     @Test
     void incrementSummaryWhenDynamoDbFailsShouldPropagateError() {
-        long countToAdd = 3L;
         RuntimeException dynamoException = new RuntimeException("DynamoDB error");
 
         when(lowLevelClient.updateItem(any(UpdateItemRequest.class)))
                 .thenReturn(CompletableFuture.failedFuture(dynamoException));
 
-        StepVerifier.create(adapter.incrementSummary(countToAdd))
+        StepVerifier.create(adapter.incrementSummary(countToAdd, amountToAdd))
                 .expectError(RuntimeException.class)
                 .verify();
 
@@ -99,10 +107,11 @@ class ApprovedApplicationSummaryItemAdapterTest {
 
     @Test
     void getSummaryWhenItemExistsShouldReturnSummary() {
-        Map<String, AttributeValue> responseAttributes = createMockAttributes(15L, "2024-01-15T11:00:00Z");
+        Map<String, AttributeValue> responseAttributes = createMockAttributes(15L, BigDecimal.valueOf(95000000), "2024-01-15T11:00:00Z");
         ApprovedApplicationSummary expectedSummary = new ApprovedApplicationSummary(
                 ApprovedApplicationSummaryFieldNames.SUMMARY,
                 15L,
+                BigDecimal.valueOf(95000000),
                 Instant.parse("2024-01-15T11:00:00Z")
         );
 
@@ -138,6 +147,7 @@ class ApprovedApplicationSummaryItemAdapterTest {
         ApprovedApplicationSummary defaultSummary = new ApprovedApplicationSummary(
                 ApprovedApplicationSummaryFieldNames.SUMMARY,
                 0L,
+                BigDecimal.ZERO,
                 null
         );
 
@@ -174,7 +184,7 @@ class ApprovedApplicationSummaryItemAdapterTest {
                 .build();
 
         ApprovedApplicationSummary defaultSummary = new ApprovedApplicationSummary(
-                ApprovedApplicationSummaryFieldNames.SUMMARY, 0L, null);
+                ApprovedApplicationSummaryFieldNames.SUMMARY, 0L, BigDecimal.ZERO, null);
 
         when(lowLevelClient.getItem(any(GetItemRequest.class)))
                 .thenReturn(CompletableFuture.completedFuture(emptyResponse));
@@ -187,12 +197,14 @@ class ApprovedApplicationSummaryItemAdapterTest {
                 .verifyComplete();
     }
 
-    private Map<String, AttributeValue> createMockAttributes(Long count, String lastUpdated) {
+    private Map<String, AttributeValue> createMockAttributes(Long count, BigDecimal amount, String lastUpdated) {
         Map<String, AttributeValue> attributes = new HashMap<>();
         attributes.put(ApprovedApplicationSummaryFieldNames.ID,
                 AttributeValue.builder().s(ApprovedApplicationSummaryFieldNames.SUMMARY).build());
         attributes.put(ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_COUNT,
                 AttributeValue.builder().n(count.toString()).build());
+        attributes.put(ApprovedApplicationSummaryFieldNames.APPROVED_APPLICATIONS_AMOUNT,
+                AttributeValue.builder().n(amount.toPlainString()).build());
 
         if (lastUpdated != null) {
             attributes.put(ApprovedApplicationSummaryFieldNames.LAST_UPDATED,
@@ -201,4 +213,5 @@ class ApprovedApplicationSummaryItemAdapterTest {
 
         return attributes;
     }
+
 }

@@ -21,6 +21,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -54,9 +56,9 @@ class RouterRestTest {
 
     @BeforeEach
     void setup() {
-        approvedApplicationSummary = new ApprovedApplicationSummary(ApprovedApplicationSummaryFieldNames.SUMMARY, 0, null);
+        approvedApplicationSummary = new ApprovedApplicationSummary(ApprovedApplicationSummaryFieldNames.SUMMARY, 0, BigDecimal.ZERO, null);
 
-        approvedApplicationsSummaryResponse = new ApprovedApplicationsSummaryResponse(0, null);
+        approvedApplicationsSummaryResponse = new ApprovedApplicationsSummaryResponse(0, BigDecimal.ZERO, null);
     }
 
     @Test

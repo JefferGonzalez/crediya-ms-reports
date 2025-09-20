@@ -13,6 +13,8 @@ public final class ApprovedApplicationSummaryFieldNames {
 
     public static final String APPROVED_APPLICATIONS_COUNT = "approvedApplicationsCount";
 
+    public static final String APPROVED_APPLICATIONS_AMOUNT =  "approvedApplicationsAmount";
+
     public static final String LAST_UPDATED = "lastUpdated";
 
 }

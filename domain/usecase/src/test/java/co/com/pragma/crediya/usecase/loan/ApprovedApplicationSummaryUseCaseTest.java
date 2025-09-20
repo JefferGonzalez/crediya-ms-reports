@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -39,15 +40,15 @@ class ApprovedApplicationSummaryUseCaseTest {
     void setUp() {
         useCase = new ApprovedApplicationSummaryUseCase(repository, logger);
 
-        application = new ApprovedApplication(UUID.randomUUID(), OffsetDateTime.now());
+        application = new ApprovedApplication(UUID.randomUUID(), BigDecimal.valueOf(1500000), OffsetDateTime.now());
     }
 
     @Test
     void recordApprovedApplication_WhenSuccessful_ShouldIncrementAndLog() {
         ApprovedApplicationSummary updatedSummary = new ApprovedApplicationSummary(
-                ApprovedApplicationSummaryFieldNames.SUMMARY, 5L, Instant.now());
+                ApprovedApplicationSummaryFieldNames.SUMMARY, 5L, BigDecimal.valueOf(6500000), Instant.now());
 
-        when(repository.incrementSummary(1L))
+        when(repository.incrementSummary(1L, application.amount()))
                 .thenReturn(Mono.just(updatedSummary));
 
         Mono<Void> result = useCase.recordApprovedApplication(application);
@@ -55,14 +56,14 @@ class ApprovedApplicationSummaryUseCaseTest {
         StepVerifier.create(result)
                 .verifyComplete();
 
-        verify(repository).incrementSummary(1L);
+        verify(repository).incrementSummary(1L, application.amount());
     }
 
     @Test
     void recordApprovedApplication_WhenRepositoryFails_ShouldLogErrorAndPropagateError() {
         RuntimeException repositoryError = new RuntimeException("Database connection failed");
 
-        when(repository.incrementSummary(1L))
+        when(repository.incrementSummary(1L, application.amount()))
                 .thenReturn(Mono.error(repositoryError));
 
         Mono<Void> result = useCase.recordApprovedApplication(application);
@@ -71,13 +72,13 @@ class ApprovedApplicationSummaryUseCaseTest {
                 .expectError(RuntimeException.class)
                 .verify();
 
-        verify(repository).incrementSummary(1L);
+        verify(repository).incrementSummary(1L, application.amount());
     }
 
     @Test
     void getApprovedApplicationsSummary_WhenSuccessful_ShouldReturnSummaryAndLog() {
         ApprovedApplicationSummary summary = new ApprovedApplicationSummary(
-                "summary", 10L, Instant.parse("2024-01-15T12:00:00Z"));
+                "summary", 10L, BigDecimal.valueOf(85000000), Instant.parse("2024-01-15T12:00:00Z"));
 
         when(repository.getSummary())
                 .thenReturn(Mono.just(summary));
@@ -109,7 +110,7 @@ class ApprovedApplicationSummaryUseCaseTest {
 
     @Test
     void getApprovedApplicationsSummary_WhenReturnsEmptySummary_ShouldHandleGracefully() {
-        ApprovedApplicationSummary emptySummary = new ApprovedApplicationSummary("summary", 0L, null);
+        ApprovedApplicationSummary emptySummary = new ApprovedApplicationSummary("summary", 0L, BigDecimal.ZERO, null);
 
         when(repository.getSummary())
                 .thenReturn(Mono.just(emptySummary));
