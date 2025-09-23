@@ -32,7 +32,7 @@ public class JwtProviderAdapter implements JwtProviderPort {
     }
 
     private SecretKey getSecretKey() {
-        String secretKey = properties.getSecretKey();
+        String secretKey = properties.secretKey();
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
 
         return Keys.hmacShaKeyFor(keyBytes);
