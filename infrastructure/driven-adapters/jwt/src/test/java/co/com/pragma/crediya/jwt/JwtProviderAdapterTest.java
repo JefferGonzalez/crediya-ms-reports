@@ -22,13 +22,10 @@ class JwtProviderAdapterTest {
 
     private User user;
 
-    private final JwtProperties properties = new JwtProperties();
+    private final JwtProperties properties = new JwtProperties("q/MbiTiaKL9wCSeISqOlOQvDjg7s+xmYRtNhYbq7T3A=", 10000L);
 
     @BeforeEach
     void setUp() {
-        properties.setSecretKey("q/MbiTiaKL9wCSeISqOlOQvDjg7s+xmYRtNhYbq7T3A=");
-        properties.setExpiration(10000L);
-
         adapter = new JwtProviderAdapter(properties);
 
         user = new User("johndoe@example.com");
@@ -40,7 +37,7 @@ class JwtProviderAdapterTest {
                 .id(UUID.randomUUID().toString())
                 .subject(user.email())
                 .claim(UserFieldNames.ROLES, List.of(DomainConstants.ADMIN_ROLE))
-                .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.getSecretKey())))
+                .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.secretKey())))
                 .compact();
 
         Jwt jwt = adapter.parseToken(token);
