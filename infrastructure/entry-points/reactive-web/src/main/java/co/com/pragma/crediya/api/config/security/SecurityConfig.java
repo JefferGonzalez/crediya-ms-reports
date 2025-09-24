@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchangeSpec -> exchangeSpec
                         .pathMatchers(ApiConstants.PUBLIC_PATTERNS)
                         .permitAll()
-                        .pathMatchers(HttpMethod.GET, ApiConstants.REPORTS_PATH)
+                        .pathMatchers(HttpMethod.GET, ApiConstants.BASE_PATH)
                         .hasAnyAuthority(
                                 DomainConstants.ADMIN_ROLE
                         )

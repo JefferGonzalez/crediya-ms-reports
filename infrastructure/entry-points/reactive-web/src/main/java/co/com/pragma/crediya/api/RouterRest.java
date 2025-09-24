@@ -24,7 +24,7 @@ public class RouterRest {
     @Bean
     @RouterOperations({
             @RouterOperation(
-                    path = ApiConstants.REPORTS_PATH,
+                    path = ApiConstants.BASE_PATH,
                     produces = {MediaType.APPLICATION_JSON_VALUE},
                     method = RequestMethod.GET,
                     beanClass = ReportsHandler.class,
@@ -51,7 +51,7 @@ public class RouterRest {
     })
     public RouterFunction<ServerResponse> routerFunction(ReportsHandler handler) {
         return RouterFunctions.route()
-                .GET(ApiConstants.REPORTS_PATH, serverRequest -> handler.getApprovedLoansCount())
+                .GET(ApiConstants.BASE_PATH, serverRequest -> handler.getApprovedLoansCount())
                 .build();
     }
 

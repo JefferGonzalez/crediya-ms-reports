@@ -14,6 +14,7 @@ server:
 management:
   endpoints:
     web:
+      base-path: "/api/v1/reports/actuator"
       exposure:
         include: "health,prometheus"
   endpoint:
@@ -23,3 +24,9 @@ management:
 
 cors:
   allowed-origins: "${CORS_ALLOWED_ORIGINS}"
+
+springdoc:
+  api-docs:
+    path: "/api/v1/reports/api-docs"
+  swagger-ui:
+    path: "/api/v1/reports/swagger-ui.html"

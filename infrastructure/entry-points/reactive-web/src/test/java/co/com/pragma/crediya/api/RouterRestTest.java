@@ -71,7 +71,7 @@ class RouterRestTest {
                 .thenReturn(approvedApplicationsSummaryResponse);
 
         webTestClient.get()
-                .uri(ApiConstants.REPORTS_PATH)
+                .uri(ApiConstants.BASE_PATH)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()

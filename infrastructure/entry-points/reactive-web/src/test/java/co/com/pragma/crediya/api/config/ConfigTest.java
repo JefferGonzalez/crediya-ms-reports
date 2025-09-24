@@ -74,7 +74,7 @@ class ConfigTest {
                 .thenReturn(approvedApplicationsSummaryResponse);
 
         webTestClient.get()
-                .uri(ApiConstants.REPORTS_PATH)
+                .uri(ApiConstants.BASE_PATH)
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Content-Security-Policy",
