@@ -7,15 +7,15 @@ public final class ApiConstants {
 
     public static final String API_V1 = "/api/v1";
 
-    public static final String REPORTS_PATH = API_V1 + "/reports";
+    public static final String BASE_PATH = API_V1 + "/reports";
 
     public static final String[] PUBLIC_PATTERNS = {
-            "/actuator",
-            "/actuator/health",
-            "/actuator/prometheus",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html"
+            BASE_PATH + "/actuator",
+            BASE_PATH + "/actuator/health",
+            BASE_PATH + "/actuator/prometheus",
+            BASE_PATH + "/swagger-ui.html",
+            BASE_PATH + "/swagger-ui/**",
+            BASE_PATH + "/api-docs/**"
     };
 
     public static final String BEARER_PREFIX = "Bearer ";
